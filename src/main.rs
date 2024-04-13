@@ -13,7 +13,6 @@ use piston::input::{
 use piston::window::WindowSettings;
 use rand::{thread_rng, Rng};
 use std::collections::LinkedList;
-use std::iter::FromIterator;
 
 const FPS: u64 = 5;
 const BLOCKSIZE: i32 = 20;
@@ -44,7 +43,7 @@ struct Snake {
 
 impl Snake {
     fn travel(&mut self, dir: Direction) {
-        let mut head = (*self.body.front().expect("Head is missing")).clone();
+        let mut head = *self.body.front().expect("Head is missing");
         match dir {
             Direction::Left => head.0 -= 1,
             Direction::Right => head.0 += 1,
@@ -63,7 +62,7 @@ impl Snake {
             self.body.pop_back();
             true
         };
-        return food_remains;
+        food_remains
     }
 
     fn render(&self, gl: &mut GlGraphics, args: &RenderArgs) {
@@ -71,7 +70,11 @@ impl Snake {
             .body
             .iter()
             .map(|&(x, y)| {
-                graphics::rectangle::square((x * BLOCKSIZE) as f64, (y * BLOCKSIZE) as f64, 20_f64)
+                graphics::rectangle::square(
+                    (x * BLOCKSIZE) as f64,
+                    (y * BLOCKSIZE) as f64,
+                    BLOCKSIZE as f64,
+                )
             })
             .collect();
 
@@ -107,7 +110,7 @@ impl Game {
                 graphics::rectangle::square(
                     (fx * BLOCKSIZE) as f64,
                     (fy * BLOCKSIZE) as f64,
-                    20_f64,
+                    BLOCKSIZE as f64,
                 ),
                 transform,
                 gl,
@@ -129,13 +132,13 @@ impl Game {
     }
 
     fn pressed(&mut self, btn: &Button) {
-        let prev_dir = self.dir.clone();
+        let prev_dir = self.dir;
 
-        self.dir = match btn {
-            &Button::Keyboard(Key::Up) if prev_dir != Direction::Down => Direction::Up,
-            &Button::Keyboard(Key::Down) if prev_dir != Direction::Up => Direction::Down,
-            &Button::Keyboard(Key::Left) if prev_dir != Direction::Right => Direction::Left,
-            &Button::Keyboard(Key::Right) if prev_dir != Direction::Left => Direction::Right,
+        self.dir = match *btn {
+            Button::Keyboard(Key::Up) if prev_dir != Direction::Down => Direction::Up,
+            Button::Keyboard(Key::Down) if prev_dir != Direction::Up => Direction::Down,
+            Button::Keyboard(Key::Left) if prev_dir != Direction::Right => Direction::Left,
+            Button::Keyboard(Key::Right) if prev_dir != Direction::Left => Direction::Right,
             _ => prev_dir,
         }
     }
@@ -160,7 +163,7 @@ fn main() {
     let mut game = Game {
         gl: GlGraphics::new(opengl),
         snake: Snake {
-            body: LinkedList::from_iter((vec![(1, SCREEN_H / 2), (0, SCREEN_H / 2)]).into_iter()),
+            body: LinkedList::from([(1, SCREEN_H / 2), (0, SCREEN_H / 2)]),
         },
         dir: Direction::Right,
         food: Food {
@@ -175,7 +178,7 @@ fn main() {
             game.render(&args);
         }
 
-        if let Some(_) = e.update_args() {
+        if e.update_args().is_some() {
             game.update();
         }
 

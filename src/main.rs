@@ -91,6 +91,7 @@ struct Game {
     gl: GlGraphics,
     snake: Snake,
     dir: Direction,
+    next_dir: Direction,
     food: Food,
 }
 
@@ -121,6 +122,7 @@ impl Game {
     }
 
     fn update(&mut self) {
+        self.dir = self.next_dir;
         self.snake.travel(self.dir);
         let food = self.food;
         let ate: bool = !self.snake.eat(food);
@@ -132,15 +134,13 @@ impl Game {
     }
 
     fn pressed(&mut self, btn: &Button) {
-        let prev_dir = self.dir;
-
-        self.dir = match *btn {
-            Button::Keyboard(Key::Up) if prev_dir != Direction::Down => Direction::Up,
-            Button::Keyboard(Key::Down) if prev_dir != Direction::Up => Direction::Down,
-            Button::Keyboard(Key::Left) if prev_dir != Direction::Right => Direction::Left,
-            Button::Keyboard(Key::Right) if prev_dir != Direction::Left => Direction::Right,
-            _ => prev_dir,
-        }
+        self.next_dir = match *btn {
+            Button::Keyboard(Key::Up) if self.dir != Direction::Down => Direction::Up,
+            Button::Keyboard(Key::Down) if self.dir != Direction::Up => Direction::Down,
+            Button::Keyboard(Key::Left) if self.dir != Direction::Right => Direction::Left,
+            Button::Keyboard(Key::Right) if self.dir != Direction::Left => Direction::Right,
+            _ => self.dir,
+        };
     }
 }
 
@@ -166,6 +166,7 @@ fn main() {
             body: LinkedList::from([(1, SCREEN_H / 2), (0, SCREEN_H / 2)]),
         },
         dir: Direction::Right,
+        next_dir: Direction::Right,
         food: Food {
             x: food_x,
             y: food_y,
